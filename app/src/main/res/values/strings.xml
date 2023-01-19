@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">PictureToPC</string>
+    <string name="IPField">Code</string>
+    <string name="connect">Connect</string>
+    <string name="done_btn">Done</string>
+    <string name="takepicture_btn">TakePicture</string>
+</resources>
