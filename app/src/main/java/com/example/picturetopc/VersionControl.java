@@ -43,11 +43,11 @@ interface GitHubService {
 }
 
 public class VersionControl {
-    private Retrofit retrofit = new Retrofit.Builder()
+    private final Retrofit retrofit = new Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .baseUrl("https://api.github.com/")
             .build();
-    private GitHubService service = retrofit.create(GitHubService.class);
+    private final GitHubService service = retrofit.create(GitHubService.class);
 
 
     void getRequest(Runnable func){

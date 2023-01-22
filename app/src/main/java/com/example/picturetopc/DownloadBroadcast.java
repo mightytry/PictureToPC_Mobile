@@ -19,7 +19,7 @@ public class DownloadBroadcast extends BroadcastReceiver {
     private final Executor backgroundExecutor = Executors.newSingleThreadExecutor();
 
     public long downloadID;
-    private DownloadManager downloadManager;
+    private final DownloadManager downloadManager;
 
     public DownloadBroadcast(DownloadManager downloadmanager ,long id){
         downloadID = id;

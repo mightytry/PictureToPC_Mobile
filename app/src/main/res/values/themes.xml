@@ -14,17 +14,9 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="Theme.PictureToPC.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-
     <style name="animation">
         <item name="android:windowEnterAnimation">@anim/nav_default_enter_anim</item>
         <item name="android:windowExitAnimation">@anim/nav_default_exit_anim</item>
     </style>
 
-    <style name="Theme.PictureToPC.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
-    <style name="Theme.PictureToPC.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

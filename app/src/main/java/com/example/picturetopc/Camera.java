@@ -99,7 +99,7 @@ public class Camera extends AppCompatActivity {
 
         preview.setSurfaceProvider(view.getSurfaceProvider());
 
-        androidx.camera.core.Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview, imageCapture);
+        androidx.camera.core.Camera camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
     }
 
     private void startCamera() {
