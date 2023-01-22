@@ -1,17 +1,11 @@
 package com.example.picturetopc;
 
 import android.graphics.Bitmap;
-import android.os.Debug;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,19 +20,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Stream;
 
-class ConnHandler extends Thread {
+class ConnHanlder extends Thread {
     MulticastSocket socket;
 
     InetAddress ip;
     int port;
 
-    EditText name;
     EditText code;
 
 
-    public ConnHandler(String _ip, int _port, EditText _name, EditText _code) throws IOException {
+    public ConnHanlder(String _ip, int _port, EditText _code) throws IOException {
         socket = new MulticastSocket();
         ip = InetAddress.getByName(_ip);
         socket.joinGroup(ip);
@@ -47,7 +39,6 @@ class ConnHandler extends Thread {
 
         port = _port;
 
-        name = _name;
         code = _code;
     }
 
@@ -64,7 +55,7 @@ class ConnHandler extends Thread {
             String msg = null;
 
 
-            msg = "{\"name\": \"" + name.getText().toString() + "\", \"code\": \"" + code.getText().toString() + "\", \"port\":" + 42069 + "}";
+            msg = "{\"code\": \"" + code.getText().toString() + "\", \"ip\": \"" + "0" + "\", \"port\":" + 42069 + "}";
 
 
             DatagramPacket msgPacket = new DatagramPacket(msg.getBytes(), msg.getBytes().length, this.ip, this.port);
@@ -86,21 +77,22 @@ class ConnListener extends Thread
     ProgressBar progressBar;
     List<Connection> connections;
 
-    TextView connText;
+    Button button;
 
-    public ConnListener(ProgressBar _progressBar, TextView conntext) throws IOException{
+    public ConnListener(ProgressBar _progressBar, Button _button) throws IOException{
         socket = new ServerSocket(42069);
         progressBar = _progressBar;
 
         connections = new ArrayList<>();
 
-        connText = conntext;
+        button = _button;
     }
 
     public void run(){
         while (socket != null){
             try {
                 connections.add(new Connection(socket.accept(), this));
+                button.setText("Connected: " + connections.size());
             } catch (IOException e) {
                 run();
                 return;
@@ -110,18 +102,7 @@ class ConnListener extends Thread
 
     public void Disconnect(Connection connection) {
         connections.remove(connection);
-        ChangeConnections();
-    }
-
-    public void ChangeConnections(){
-        String[] text = new String[connections.size()];
-
-        for (int i = 0; i<text.length; i++){
-            text[i] = ("• " + connections.get(i).Name);
-        }
-
-        connText.setText(String.join("\n", text));
-
+        button.setText("Connected: " + connections.size());
     }
 
     public void SendAll(Bitmap pic) {
@@ -144,32 +125,10 @@ class ConnListener extends Thread
         socket = null;
     }
 }
-class ConnReader extends Thread{
-    Connection Listener;
-
-    public ConnReader(Connection listener){
-        Listener = listener;
-    }
-
-    public void run() {
-        while (true){
-            //Get name
-            byte[] bytes = new byte[1024];
-            try {
-                Listener.Input.read(bytes);
-            } catch (IOException e) {
-                break;
-            }
-            if (bytes[0] == 0) continue;
-            Listener.Name = new String(bytes, StandardCharsets.UTF_8).trim();
-            break;
-        }
-        Listener.ConnListener.ChangeConnections();
-    }
-}
 
 class ConnSender extends Thread {
     Connection Listener;
+
     List<byte[]> Sendable;
 
     public ConnSender(Connection listener){
@@ -189,13 +148,14 @@ class ConnSender extends Thread {
             try {
                 sleep(100);
             } catch (InterruptedException e) {
-                return;
+                e.printStackTrace();
             }
             return;
         }
 
         int size = 1024;
         byte[] send = Sendable.remove(0);
+        byte[] sdata = new byte[size];
 
         Listener.ConnListener.progressBar.setMax(send.length);
         try {
@@ -206,6 +166,7 @@ class ConnSender extends Thread {
             }
         } catch (IOException e) {
             Listener.Disconnect();
+            return;
         }
     }
     public void KeepAlive(){
@@ -255,12 +216,10 @@ class Connection {
     InputStream Input;
     OutputStream Output;
 
-    ConnReader Reader;
+    //ConnReader Reader;
     ConnSender Sender;
 
     ConnTimeout Timeout;
-
-    public String Name;
 
 
 
@@ -269,7 +228,7 @@ class Connection {
 
     public Connection(Socket socket, ConnListener connListener) throws SocketException {
         Socket = socket;
-        socket.setSoTimeout(1000);
+        socket.setSoTimeout(1*1000);
         ConnListener = connListener;
 
         Stop = false;
@@ -282,13 +241,12 @@ class Connection {
             return;
         }
 
-
-        Reader = new ConnReader(this);
+        //Reader = new ConnReader(this);
         Sender = new ConnSender(this);
 
         Timeout = new ConnTimeout(Sender);
 
-        Reader.start();
+        //Reader.start();
         Sender.start();
 
         Timeout.start();
@@ -301,7 +259,7 @@ class Connection {
     public void Disconnect() {
         try {
             Socket.close();}
-        catch (IOException ignored)
+        catch (IOException e)
         {}
         Stop = true;
 
