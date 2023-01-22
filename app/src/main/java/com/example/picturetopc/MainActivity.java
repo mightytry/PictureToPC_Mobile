@@ -3,7 +3,6 @@ package com.example.picturetopc;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -12,39 +11,21 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Console;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 
 
@@ -67,7 +48,9 @@ class Listener implements View.OnClickListener {
 
 class IoHandler {
     SharedPreferences.Editor Editor;
-    EditText EditText;
+
+    EditText NameEdit;
+    EditText CodeEdit;
 
     Button ButtonConnect;
 
@@ -77,12 +60,15 @@ class IoHandler {
     ProgressBar ProgressBar;
     MainActivity Main;
 
-    ConnHanlder connHanlder;
+    ConnHandler connHanlder;
     ConnListener connListener;
 
-    public IoHandler(String code, SharedPreferences.Editor editor, EditText editText, Button buttonConnect, ProgressBar progessBar, MainActivity main){
+    public IoHandler(SharedPreferences sharedPreferences, EditText nameEdit, EditText codeEdit, Button buttonConnect, ProgressBar progessBar, MainActivity main){
+        SharedPreferences.Editor editor = sharedPreferences.edit();
         Editor = editor;
-        EditText = editText;
+
+        NameEdit = nameEdit;
+        CodeEdit = codeEdit;
 
         ButtonConnect = buttonConnect;
         ButtonCancel = main.dialog.findViewById(R.id.btn_cancel);
@@ -97,11 +83,11 @@ class IoHandler {
 
 
 
-        Load(code);
+        Load(sharedPreferences.getString("Name", null), sharedPreferences.getString("Code", null));
 
         try {
-            connHanlder = new ConnHanlder("224.69.69.69", 42069, EditText);
-            connListener = new ConnListener(ProgressBar, ButtonConnect);
+            connHanlder = new ConnHandler("224.69.69.69", 42069, NameEdit, CodeEdit);
+            connListener = new ConnListener(ProgressBar, Main.findViewById(R.id.Connections));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -109,12 +95,14 @@ class IoHandler {
         connHanlder.start();
         connListener.start();
     }
-    public void Load(String code){
-        EditText.setText(code);
+    public void Load(String name, String code){
+        NameEdit.setText(name);
+        CodeEdit.setText(code);
     }
 
     public void Save() {
-        Editor.putString("IP", EditText.getText().toString());
+        Editor.putString("Name", NameEdit.getText().toString());
+        Editor.putString("Code", CodeEdit.getText().toString());
         Editor.commit();
     }
 
@@ -144,8 +132,6 @@ public class MainActivity extends AppCompatActivity {
     DownloadManager manager;
     VersionControl versionControl;
 
-    private Intent intent;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -160,13 +146,10 @@ public class MainActivity extends AppCompatActivity {
         dialog.getWindow().getAttributes().windowAnimations = R.style.animation;
         //dialog.setCancelable(false);
 
+
         SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
 
-        final String code = sharedPreferences.getString("IP", null);
-
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        connection = new IoHandler(code, editor, findViewById(R.id.IpAdress), findViewById(R.id.ConnectBtn), findViewById(R.id.progressBar),this);
+        connection = new IoHandler(sharedPreferences, findViewById(R.id.Name), findViewById(R.id.IpAdress), findViewById(R.id.ConnectBtn), findViewById(R.id.progressBar),this);
     }
 
     @Override
@@ -174,13 +157,13 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         String pic = "img.bmp";
         String dir = getExternalCacheDir().getAbsolutePath();
-        new File(dir + "/" + pic).delete();
+        deleteFile(dir + "/" + pic);
 
         connection.connListener.DisconnectAll();
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
         connection.Save();
@@ -189,14 +172,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void GetImage(){
-        intent = new Intent(this, Camera.class);
+        Intent intent = new Intent(this, Camera.class);
 
         canmeraActivity.launch(intent);
 
 
     }
 
-    private ActivityResultLauncher<Intent> canmeraActivity = registerForActivityResult(
+    private final ActivityResultLauncher<Intent> canmeraActivity = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
