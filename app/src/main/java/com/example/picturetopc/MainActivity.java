@@ -136,14 +136,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        versionControl = new VersionControl();
-        versionControl.getRequest(this::download);
 
         dialog = new Dialog(MainActivity.this);
         dialog.setContentView(R.layout.update_dialog);
         dialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.update_background));
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().getAttributes().windowAnimations = R.style.animation;
+
+        versionControl = new VersionControl();
+        versionControl.getRequest(dialog::show);
         //dialog.setCancelable(false);
 
 
