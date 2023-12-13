@@ -11,24 +11,24 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-
-
-
+import java.io.InputStream;
 
 
 class Listener implements View.OnClickListener {
@@ -56,6 +56,7 @@ class IoHandler {
 
     Button ButtonOkay;
     Button ButtonCancel;
+    Button ButtonCooseImgGalery;
 
     ProgressBar ProgressBar;
     MainActivity Main;
@@ -73,6 +74,7 @@ class IoHandler {
         ButtonConnect = buttonConnect;
         ButtonCancel = main.dialog.findViewById(R.id.btn_cancel);
         ButtonOkay = main.dialog.findViewById(R.id.btn_okay);
+        ButtonCooseImgGalery = main.findViewById(R.id.btn_chooseGalery);
 
         ProgressBar =progessBar;
         Main = main;
@@ -80,6 +82,7 @@ class IoHandler {
         ButtonConnect.setOnClickListener(new Listener(this));
         ButtonCancel.setOnClickListener(new Listener(this));
         ButtonOkay.setOnClickListener(new Listener(this));
+        ButtonCooseImgGalery.setOnClickListener(new Listener(this));
 
 
 
@@ -106,6 +109,8 @@ class IoHandler {
         Editor.commit();
     }
 
+
+
     public void OnClick(View view) {
         if (ButtonConnect.equals(view)) {
             Main.GetImage();
@@ -116,6 +121,8 @@ class IoHandler {
         else if (ButtonOkay.equals(view)){
             Main.download();
             Main.dialog.dismiss();
+        } else if (ButtonCooseImgGalery.equals(view)) {
+            Main.ChooseImgGallery();
         }
     }
 
@@ -171,6 +178,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void ChooseImgGallery(){
+        pickMultipleMedia.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
+
+    }
 
     public void GetImage(){
         Intent intent = new Intent(this, Camera.class);
@@ -179,7 +192,31 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
+    private final ActivityResultLauncher<PickVisualMediaRequest> pickMultipleMedia = registerForActivityResult(
+            new ActivityResultContracts.PickMultipleVisualMedia(), uris -> {
+                // Callback is invoked after the user selects media items or closes the
+                // photo picker.
+                if (!uris.isEmpty()) {
+                    for ( Uri uri: uris
+                         ) {
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        InputStream imageStream = null;
+                        try {
+                            imageStream = getContentResolver().openInputStream(uri);
+                        } catch (FileNotFoundException e) {
+                            continue;
+                        }
+                        Bitmap bitmap = BitmapFactory.decodeStream(imageStream, null, options);
+                        connection.onPicture(bitmap);
+                        try {
+                            imageStream.close();
+                        } catch (IOException e) {
+                            continue;
+                        }
+                    }
+                } else {
+                }
+            });
     private final ActivityResultLauncher<Intent> canmeraActivity = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {

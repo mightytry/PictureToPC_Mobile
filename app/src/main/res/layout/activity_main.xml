@@ -42,6 +42,19 @@
         app:layout_constraintVertical_bias="0.186" />
 
     <Button
+        android:id="@+id/btn_chooseGalery"
+        android:layout_width="114dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:text="Choose gallery"
+        app:layout_constraintBottom_toTopOf="@+id/IpAdress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.46"
+        app:layout_constraintStart_toStartOf="@+id/guideline2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.262" />
+    <Button
         android:id="@+id/ConnectBtn"
         android:layout_width="204dp"
         android:layout_height="57dp"
@@ -89,5 +102,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintGuide_percent="0.5"
         app:layout_constraintStart_toStartOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
